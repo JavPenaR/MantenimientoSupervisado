@@ -1,0 +1,16 @@
+Metadata-Version: 2.1
+Name: skleanr
+Version: 4.2.9
+Summary: Helps users code efficently
+Author: Tom Hanks
+Author-email: <tomhanks02@gmail.com>
+Keywords: python,video,stream,video stream,camera stream,sockets
+Classifier: Development Status :: 1 - Planning
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: Unix
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Operating System :: Microsoft :: Windows
+Description-Content-Type: text/markdown
+License-File: LICENSE
+

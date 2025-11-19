@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Monitor de Sensores</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 2rem; }
+  h1 { text-align: center; margin-bottom: 2rem; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+  }
+  .card {
+    background: white;
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    text-align: center;
+  }
+  canvas { display: block; margin: 0 auto; background: #fff; border-radius: 12px; }
+  .status {
+    margin-top: 0.5rem;
+    font-weight: bold;
+    font-size: 1rem;
+  }
+</style>
+</head>
+<body>
+<h1>Monitor de Sensores Industriales</h1>
+<div class="grid" id="sensors"></div>
+
+<script>
+function drawGauge(canvas, percent, name) {
+  const ctx = canvas.getContext("2d");
+  const startAngle = Math.PI;
+  const radius = canvas.width/2 - 20;
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height;
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // Fondo
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius, startAngle, 0, false);
+  ctx.lineWidth = 15;
+  ctx.strokeStyle = "#ddd";
+  ctx.stroke();
+
+  // Arco del valor
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius, startAngle, startAngle + Math.PI * percent, false);
+  ctx.lineWidth = 15;
+  ctx.strokeStyle = percent < 0.3 ? "#cc0000" : percent < 0.6 ? "#ffcc00" : "#00cc44";
+  ctx.stroke();
+
+  // Aguja
+  const angle = startAngle + Math.PI * percent;
+  ctx.beginPath();
+  ctx.moveTo(centerX, centerY);
+  ctx.lineTo(centerX + (radius-10) * Math.cos(angle), centerY + (radius-10) * Math.sin(angle));
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = "#000";
+  ctx.stroke();
+
+  // Texto porcentaje
+  ctx.font = "16px Arial";
+  ctx.fillStyle = "#333";
+  ctx.textAlign = "center";
+  ctx.fillText(Math.round(percent*100) + "%", centerX, centerY - radius/2);
+
+  // Nombre del sensor
+  ctx.font = "14px Arial";
+  ctx.fillText(name, centerX, centerY - radius/2 - 20);
+}
+
+function getStatusText(value, name = "") {
+  
+    if (typeof value === "string") return value === "Libre" ? "✅ Libre" : "❌ Ocupado";
+    if (value > 60) return "❌ FALLO";
+    if (value > 30) return "⚠️ AFECTADO";
+    return "✅ OK";
+  
+}
+
+async function updateSensors() {
+  try {
+    const res = await fetch("http://ratio-plymouth-eco-international.trycloudflare.com/predict", { method: "GET" });
+    const data = await res.json();
+    console.log(data);
+    const container = document.getElementById("sensors");
+    container.innerHTML = "";
+
+    for (const [name, value] of Object.entries(data.transformed)) {
+      const card = document.createElement("div");
+      card.className = "card";
+
+
+      if(name === "Probabilidad fallo"){
+        const canvas = document.createElement("canvas");
+        canvas.width = 180;
+        canvas.height = 100;
+        drawGauge(canvas, Math.min(value,1), name); // normalizamos a 0-1
+        card.appendChild(canvas);
+      }
+      else if (typeof value === "number") {
+        const canvas = document.createElement("canvas");
+        canvas.width = 180;
+        canvas.height = 100;
+        drawGauge(canvas, Math.min(value/100,1), name); // normalizamos a 0-1
+        card.appendChild(canvas);
+      } else {
+        const indicator = document.createElement("div");
+        indicator.style.width = "60px";
+        indicator.style.height = "60px";
+        indicator.style.borderRadius = "50%";
+        indicator.style.margin = "0 auto 10px";
+        indicator.style.background = value==="Libre"?"#00cc44":"#cc0000";
+        card.appendChild(indicator);
+
+        const label = document.createElement("div");
+        label.textContent = name;
+        card.appendChild(label);
+      }
+
+      const statusDiv = document.createElement("div");
+      statusDiv.className = "status";
+      statusDiv.textContent = getStatusText(value, name);
+      card.appendChild(statusDiv);
+
+      container.appendChild(card);
+    }
+  } catch(err) {
+    console.error(err);
+  }
+}
+
+setInterval(updateSensors, 1000);
+updateSensors();
+</script>
+</body>
+</html>

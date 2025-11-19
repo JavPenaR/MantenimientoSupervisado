@@ -1,0 +1,14 @@
+temperatura_ambiente_c
+temperatura_entrada_c
+temperatura_salida_c
+delta_temp_c
+presion_entrada_bar
+presion_salida_bar
+delta_presion_bar
+flujo_masico_kgs
+vibracion_rms_mms
+velocidad_rpm
+potencia_kw
+consumo_energia_kwh
+horas_operacion
+humedad_relativa_pct
